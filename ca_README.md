@@ -31,7 +31,7 @@ Crearem un clúster a partir de la configuració [./local-cluster.yaml](./local-
 kind create cluster --config local-cluster.yaml
 ```
 
-Si tot ha funcionat bé, hauriem de poder interactuar amb el clúster mitjançant l'eina de kubectl. 
+Si tot ha funcionat bé, hauríem de poder interactuar amb el clúster mitjançant l'eina de `kubectl`. 
 * Per exemple, podem llistar els 2 nodes del clúster (control-plane + worker):
     ```bash
     kubectl get node
@@ -86,7 +86,6 @@ Observem que el desplegament [./deploy-stack/deployment.yaml](./deploy-stack/dep
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
-name: pod-info
 metadata:
   name: pod-info
 spec:
@@ -124,7 +123,7 @@ Per tant, si accedim a `https://localhost/info` estarem accedint a un dels pods 
 
 ![alt text](images/exemple-pod.png)
 
-Si refresquem la pàgina veurem que ens respon un pod diferent, ja que el servei fa una distribució `Round-Robin` de les peticions. El següent esquema descriu la ruta que segueix el tràfic de xarxa dins del clúster
+Si refresquem la pàgina veurem que **ens respon un pod diferent**, ja que el servei fa una distribució `Round-Robin` de les peticions. El següent esquema descriu la ruta que segueix el tràfic de xarxa dins del clúster
 
 ![alt text](images/schema-network.png)
 
@@ -169,14 +168,14 @@ kubectl scale --replicas=2 deployment/pod-info
 ## Monitorització
 
 ### Requisits
-* Helm: Gestor de paquets de Kubernetes
+* `Helm`: Gestor de paquets de Kubernetes
     ```bash
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     chmod 700 get_helm.sh
     ./get_helm.sh
     ```
 
-Part de la gràcia de Kubernetes resideix en la facilitat amb la qual podem desplegar stacks d'aplicacions i configurar automatitzacions concretes. A continuació, desplegarem un stack de monitorització bàsic per capturar les mètriques del `Nginx Ingress` que fa de reverse proxy a la nostra aplicació. Mitjançant aquest, podrem observar el nombre de peticions que ens arriben al clúster, i mètriques de rendiment associades.
+Part de la gràcia de Kubernetes resideix en la facilitat amb la qual podem desplegar stacks d'aplicacions i configurar automatitzacions concretes. A continuació, desplegarem un stack de monitorització bàsic per capturar les mètriques del `Nginx Ingress` que fa de `reverse proxy` a la nostra aplicació. Mitjançant aquest, podrem observar el nombre de peticions que ens arriben al clúster, i mètriques de rendiment associades.
 
 
 * Definim el Dashboard que farem servir per visualitzar les mètriques de nginx ingress
@@ -194,13 +193,15 @@ helm repo update
 helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f ./monitoring/values-kps.yaml -n monitoring --create-namespace
 ```
 
-* Despleguem el recurs per capturar les mètriques de nginx-ingress
+* Despleguem el recurs per capturar les mètriques de `nginx-ingress`
 
 ```bash
 kubectl apply -f monitoring/service-monitor.yaml
 ```
 
-* Fem un `port-forward` per accedir a grafana facilment mitjançant el port 3000. **Aquesta comanda bloqueja la consola!**, creará un tunnel per atacar directament grafana via `localhost:3000`
+* Fem un `port-forward`amb kubectl per accedir a Grafana fàcilment mitjançant el port 3000. **Aquesta comanda bloqueja la consola!**, creará un tunnel per atacar `grafana` directament via `localhost:3000`
+
+> Potser triga una mica en aixecar-se tot el stack de monitorització. Pots revisar que tots els pods s'han creat i es troben en estat running `kubectl get pod -n monitoring`.
 
 ```bash
 kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80
@@ -211,15 +212,19 @@ Accedim via `http://localhost:3000` i fem login:
 username: admin
 password: prom-operator
 ```
-Si tot ha funcionat bé, sota Home > Dashboards > NGINX Ingress Controller. Hauriem de veure el dashboard del `reverse proxy nginx-ingress`
+Si tot ha funcionat bé, sota `Home > Dashboards > NGINX Ingress Controller`. Hauríem de veure el dashboard del `reverse proxy nginx-ingress`.
 
 ![alt text](images/grafana.png)
 
-Podem generar tràfic sintètic via curls
+Podem generar tràfic sintètic cap al desplegament `pod-info` amb `curl`
 
 ```bash
 for i in {1..100000}; do curl -s http://localhost/info > /dev/null; done
 ```
+
+Si anem refrescant el dashboard, veurem que el tràfic del `ingress` anomenat `pod-info-ingress` incrementa.
+
+![alt text](images/load-grafana-ingress.png)
 
 ## CleanUP
 
