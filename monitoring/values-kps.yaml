@@ -1,0 +1,4 @@
+crds:
+  enabled: true
+alertmanager:
+  enabled: false

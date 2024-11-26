@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+name: pod-info
+metadata:
+  name: pod-info
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pod-info
+  template:
+    metadata:
+      labels:
+        app: pod-info
+    spec:
+      containers:
+      - name: pod-info
+        image: hashicorp/http-echo
+        args:
+        - "-text=<h1>Hola! Sóc un Pod<h1><p>$(HOSTNAME)</p>"
+        - "-listen=:3000"
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        ports:
+        - containerPort: 3000
